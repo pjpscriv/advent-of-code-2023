@@ -44,8 +44,24 @@ function getHandScore($hand) {
     }    
 }
 
+function transformToSortable($cards) {
+    $cards = $cards.Replace("A", "A")
+    $cards = $cards.Replace("K", "B")
+    $cards = $cards.Replace("Q", "C")
+    $cards = $cards.Replace("J", "D")
+    $cards = $cards.Replace("T", "E")
+    $cards = $cards.Replace("9", "F")
+    $cards = $cards.Replace("8", "G")
+    $cards = $cards.Replace("7", "H")
+    $cards = $cards.Replace("6", "I")
+    $cards = $cards.Replace("5", "J")
+    $cards = $cards.Replace("4", "K")
+    $cards = $cards.Replace("3", "L")
+    $cards = $cards.Replace("2", "M")
+    return $cards
+}
 
-$lines = get-content -Path 'test.txt'
+$lines = get-content -Path 'input.txt'
 
 $hands = @()
 foreach ($line in $lines) {
@@ -54,37 +70,35 @@ foreach ($line in $lines) {
     $bid = [int] $parts[1]
 
     $score = getHandScore($cards)
-    Write-Host $score
+    # Write-Host $score
     
     $hand = @{
         score = $score
-        sortHand = $cards
+        cards = $cards
+        sortHand = transformToSortable($cards)
         bid = $bid
     }
 
     $hands += $hand
 }
 
+# write-host
+# foreach ($hand in $hands) {
+#     write-host $hand.score, $hand.cards, $hand.bid
+# }
+    
+
 write-host
-
-
-foreach ($hand in $hands) { write-host $hand.score, $hand.sortHand }
-
-
-write-host
-
-write-host gettype $hands[0]
-
-$hands = $hands | Sort-Object { $_.score }
-
+$hands = $hands | Sort-Object -Property { $_.score }, { $_.sortHand }
 
 # Do Summing
 $sum = 0
-$score = $lines.length
+$multiplier = $lines.length
 foreach ($hand in $hands) {
-    Write-Host $hand.score, $hand.sortHand
-    $sum += $hand.bid * $score
-    $score -= 1
+    Write-Host $hand.score, $hand.cards, $hand.bid, $multiplier, $hand.sortHand
+    $sum += ($hand.bid * $multiplier)
+    # write-host $sum
+    $multiplier -= 1
 }
 
 Write-Host $sum
