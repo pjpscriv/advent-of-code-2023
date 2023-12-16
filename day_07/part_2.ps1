@@ -8,11 +8,10 @@ enum HandScores {
     HighCard    = 7
 }
 
-$CARD_LIST = @('A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2')
 
 function countChars($string) {
     $uniques = $string.toCharArray() | select-object -unique
-    $dict = @{}
+    $dict = [Ordered]@{}
     foreach ($char in $uniques) {
         $count = ($string.ToCharArray() | Where-Object {$_ -eq $char}).count
         $dict[$char] = $count
@@ -20,12 +19,19 @@ function countChars($string) {
     return $dict
 }
 
-function getJokerPositions($string) {
-    return [regex]::Matches($string, 'J').Index
-}
-
 function getHandScore($hand) {
     $countDict = countChars($hand)
+
+    # Add Joker count to most common card
+    if ($countDict.Keys -Contains 'J') {
+        $jChar = [char] 'J'
+        $jokerCount = $countDict[$jChar]
+        if ($jokerCount -lt 5) {
+            $countDict.Remove($jChar)
+            $commonCard = $($countDict.GetEnumerator() | Sort-Object -Property:Value | Select -Last 1)
+            $countDict[$commonCard.Name] = $commonCard.Value + $jokerCount
+        }
+    }
 
     $counts = $countDict.Values
     $maxCount = $counts | Sort-Object | Select-Object -Last 1
@@ -50,32 +56,9 @@ function getHandScore($hand) {
     }    
 }
 
-function getMaxHandScore($hand) {
-    $jokers = getJokerPositions($hand)
-    
-    if ($jokers.Length -eq 0) {
-        return getHandScore($hand)
-    }
-
-
-    $jokerOptions = @()
-    foreach ($index in $jokers) {
-        $jokerOptions += @{
-            index = $index
-            options = $CARD_LIST
-        }
-    }
-
-    $maxScore = [HandScores]::HighCard
-    $testHand = $hand
-    foreach ($joker in $jokerOptions) {
-
-
-    }8
-
-}
-
 function transformToSortable($cards) {
+    $cards = $cards.Replace("J", "M")
+
     $cards = $cards.Replace("A", "A")
     $cards = $cards.Replace("K", "B")
     $cards = $cards.Replace("Q", "C")
@@ -88,9 +71,9 @@ function transformToSortable($cards) {
     $cards = $cards.Replace("4", "J")
     $cards = $cards.Replace("3", "K")
     $cards = $cards.Replace("2", "L")
-    $cards = $cards.Replace("J", "M")
     return $cards
 }
+
 
 $lines = get-content -Path 'input.txt'
 
@@ -100,8 +83,7 @@ foreach ($line in $lines) {
     $cards = $parts[0]
     $bid = [int] $parts[1]
 
-    $score = getMaxHandScore($cards)
-    # Write-Host $score
+    $score = getHandScore($cards)
     
     $hand = @{
         score = $score
@@ -128,5 +110,3 @@ foreach ($hand in $hands) {
 }
 
 Write-Host $sum
-
-
