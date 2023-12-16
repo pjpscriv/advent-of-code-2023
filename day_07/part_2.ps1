@@ -28,7 +28,7 @@ function getHandScore($hand) {
         $jokerCount = $countDict[$jChar]
         if ($jokerCount -lt 5) {
             $countDict.Remove($jChar)
-            $commonCard = $($countDict.GetEnumerator() | Sort-Object -Property:Value | Select -Last 1)
+            $commonCard = $($countDict.GetEnumerator() | Sort-Object -Property:Value | Select-object -Last 1)
             $countDict[$commonCard.Name] = $commonCard.Value + $jokerCount
         }
     }
